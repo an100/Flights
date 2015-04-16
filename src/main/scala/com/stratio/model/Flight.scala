@@ -9,6 +9,15 @@ object OnTime extends Cancelled (id ="OnTime")
 object Cancel extends Cancelled (id ="Cancel")
 object Unknown extends Cancelled (id ="Unknown")
 
+object CancelledFactory {
+
+  def apply(id: String) = id match {
+    case "0" => OnTime
+    case "1" => Cancel
+    case _ => Unknown
+  }
+}
+
 case class Delays (
     carrier: Cancelled,
     weather: Cancelled,
@@ -53,7 +62,40 @@ object Flight{
   * Create a new Flight Class from a CSV file
   *
   */
-  def apply(fields: Array[String]): Flight = ???
+  def apply(fields: Array[String]): Flight = {
+    new Flight(
+      ParserUtils.getDateTime(
+        fields(0).toInt,
+        fields(1).toInt,
+        fields(2).toInt),
+      fields(4).toInt,
+      fields(5).toInt,
+      fields(6).toInt,
+      fields(7).toInt,
+      fields(8),
+      fields(9).toInt,
+      fields(11).toInt,
+      fields(12).toInt,
+      fields(14).toInt,
+      fields(15).toInt,
+      fields(16),
+      fields(17),
+      fields(18).toInt,
+      CancelledFactory(
+        fields(21)),
+      fields(22).toInt,
+      Delays(
+        CancelledFactory(
+          fields(24)),
+        CancelledFactory(
+          fields(25)),
+        CancelledFactory(
+          fields(26)),
+        CancelledFactory(
+          fields(27)),
+        CancelledFactory(
+          fields(28))))
+  }
 
   /*
    *

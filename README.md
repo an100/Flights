@@ -1,5 +1,7 @@
 # Flights
 
+[![Build Status](https://travis-ci.org/ardlema/Flights.svg?branch=master)](https://travis-ci.org/ardlema/Flights)
+
 This project will include some Spark simple exercises based in the [airline datashet](http://www.stat.purdue.edu/~sguha/rhipe/doc/html/airline.html).
 
 ## File format.

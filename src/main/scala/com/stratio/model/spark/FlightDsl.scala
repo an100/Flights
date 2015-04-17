@@ -6,21 +6,24 @@ import org.apache.spark.rdd.RDD
 
 class FlightCsvReader(self: RDD[String]) {
 
-    /**
-     *
-     * Parser the csv file with the format described in the readme.md file to a Flight class
-     *
-     */
-    def toFlight: RDD[Flight] = self.map { flightAsString => Flight(flightAsString.split(',')) }
+  /**
+   *
+   * Parser the csv file with the format described in the readme.md file to a Flight class
+   *
+   */
+  def toFlight: RDD[Flight] = self.map { flightAsString => Flight(flightAsString.split(','))}
 
-    /**
-     *
-     * Obtain the parser errors
-     *
-     */
-    def toErrors: RDD[(String, String)] = ???
-  }
-
+  /**
+   *
+   * Obtain the parser errors
+   *
+   */
+  def toErrors: RDD[(String, String)] = for {
+    flightAsString <- self;
+    error <- Flight.extractErrors(flightAsString.split(','))
+    if (!error.isEmpty)
+  } yield (flightAsString, error)
+}
   class FlightFunctions(self: RDD[Flight]) {
 
     /**

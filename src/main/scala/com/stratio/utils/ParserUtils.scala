@@ -26,6 +26,7 @@ object ParserUtils {
     case _ => Some(NOT_PARSEABLE_INT_ERROR)
   }
 
+  //TODO: Why another parsing method? The getDateTime could be wrapped within a Try and then we'd just have one
   def parseDate(stringDate: String): Option[String] = {
     Try { DateTime.parse(stringDate, dateTimeFormat)} match {
       case Failure(_) => Some(NOT_PARSEABLE_DATE_ERROR)

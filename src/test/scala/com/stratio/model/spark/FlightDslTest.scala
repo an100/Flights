@@ -162,5 +162,4 @@ class FlightDslTest extends FlatSpec with ShouldMatchers with LocalSparkSqlConte
       flight1.copy(origin = "Aux2", dest="Aux3", departureTime = 817, arrTime = 825, cRSArrTime = 730))
 
   }
-
 }

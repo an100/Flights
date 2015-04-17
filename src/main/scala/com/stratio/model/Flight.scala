@@ -9,15 +9,6 @@ object OnTime extends Cancelled (id ="OnTime")
 object Cancel extends Cancelled (id ="Cancel")
 object Unknown extends Cancelled (id ="Unknown")
 
-object CancelledFactory {
-
-  def apply(id: String) = id match {
-    case "0" => OnTime
-    case "1" => Cancel
-    case _ => Unknown
-  }
-}
-
 case class Delays (
     carrier: Cancelled,
     weather: Cancelled,
@@ -57,6 +48,22 @@ case class Flight (date: DateTime, //Tip: Use ParserUtils.getDateTime
 
 object Flight{
 
+  def intFields(fields: Array[String]) = Array(
+    fields(0),
+    fields(1),
+    fields(2),
+    fields(4),
+    fields(5),
+    fields(6),
+    fields(7),
+    fields(9),
+    fields(11),
+    fields(12),
+    fields(14),
+    fields(15),
+    fields(18),
+    fields(22))
+
   /*
   *
   * Create a new Flight Class from a CSV file
@@ -81,19 +88,19 @@ object Flight{
       fields(16),
       fields(17),
       fields(18).toInt,
-      CancelledFactory(
+      parseCancelled(
         fields(21)),
       fields(22).toInt,
       Delays(
-        CancelledFactory(
+        parseCancelled(
           fields(24)),
-        CancelledFactory(
+        parseCancelled(
           fields(25)),
-        CancelledFactory(
+        parseCancelled(
           fields(26)),
-        CancelledFactory(
+        parseCancelled(
           fields(27)),
-        CancelledFactory(
+        parseCancelled(
           fields(28))))
   }
 
@@ -102,8 +109,18 @@ object Flight{
    * Extract the different types of errors in a string list
    *
    */
-  def extractErrors(fields: Array[String]): Seq[String] = ???
+  def extractErrors(fields: Array[String]): Seq[String] =
+    intParserErrors(intFields(fields)) ++ Seq(dateParserErrors(fields))
 
+  def intParserErrors(fields: Array[String]): Seq[String] =
+    fields.flatMap(field => ParserUtils.parseIntError(field))
+
+  def dateParserErrors(fields: Array[String]): String = ParserUtils.parseDate(
+    fields(0) +
+    "-" +
+    fields(1) +
+    "-" +
+    fields(2)) getOrElse ""
   /*
   *
   * Parse String to Cancelled Enum:
@@ -111,5 +128,9 @@ object Flight{
   *   if field == 0 -> OnTime
   *   if field <> 0 && field<>1 -> Unknown
   */
-  def parseCancelled(field: String): Cancelled = ???
+  def parseCancelled(field: String): Cancelled = field match {
+    case "0" => OnTime
+    case "1" => Cancel
+    case _ => Unknown
+  }
 }

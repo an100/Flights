@@ -3,6 +3,7 @@ package com.stratio.model.spark
 import scala.language.implicitConversions
 import com.stratio.model.Flight
 import org.apache.spark.rdd.RDD
+import org.apache.spark.SparkContext._
 
 class FlightCsvReader(self: RDD[String]) {
 
@@ -38,7 +39,13 @@ class FlightCsvReader(self: RDD[String]) {
      * Obtain the average distance fliyed by airport, taking the origin field as the airport to group
      *
      */
-    def averageDistanceByAirport: RDD[(String, Float)] = ???
+    def averageDistanceByAirport: RDD[(String, Float)] = {
+      val reduceFunction = (v1: (Float, Float), v2: (Float, Float)) => ((v1._1 + v2._1), (v1._2 + v2._2))
+      val valuesReduced = self.map(f =>
+        (f.origin, f.distance.toFloat)).mapValues(v =>
+        (v,1.0F)).reduceByKey(reduceFunction)
+      valuesReduced.map{ case (key, value) => (key, value._1 / value._2.toFloat) }
+    }
 
   /**
     * A Ghost Flight is each flight that has arrTime = -1 (that means that the flight didn't land where was supposed to

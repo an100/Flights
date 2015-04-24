@@ -1,9 +1,10 @@
 package com.stratio.utils
 
+import org.apache.spark.rdd.RDD
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormatterBuilder
 
-import scala.util.{Failure, Try}
+import scala.util.{Success, Failure, Try}
 
 object ParserUtils {
 
@@ -33,4 +34,25 @@ object ParserUtils {
       case _ => None
     }
   }
+
+  def parsePrice(yearMonthPrice: String): Option[FuelPrice] = {
+    tryToParsePrice(yearMonthPrice) match {
+      case Success(price) => Some(price)
+      case Failure(_) => None
+    }
+  }
+
+  def tryToParsePrice(yearMonthPrice: String): Try[FuelPrice] = {
+    val Array(year, month, price) = yearMonthPrice.split(',')
+    for {
+      yearAsInt <- Try(year.toInt)
+      monthAsInt <- Try(month.toInt)
+      priceAsFloat <- Try(price.toFloat)
+    } yield (FuelPrice(yearAsInt, monthAsInt, priceAsFloat))
+  }
+
+  def yearMonthFuelPrice(year: Int, month:Int, fuelPrice: RDD[FuelPrice]) =
+    fuelPrice.filter(f => f.year == year && f.month == month).first().price
 }
+
+case class FuelPrice(year: Int, month: Int, price: Float)

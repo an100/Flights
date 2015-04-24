@@ -1,9 +1,19 @@
 package com.stratio.model.spark
 
+import com.stratio.utils.ParserUtils
+import org.apache.spark.broadcast.Broadcast
+
+import scala.collection.immutable.Map
 import scala.language.implicitConversions
 import com.stratio.model.Flight
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
+
+
+object Parser {
+
+
+}
 
 class FlightCsvReader(self: RDD[String]) {
 
@@ -27,12 +37,44 @@ class FlightCsvReader(self: RDD[String]) {
 }
   class FlightFunctions(self: RDD[Flight]) {
 
+    def toBroadcastMapPriceByYearAndMonth(prices: RDD[String]): Broadcast[Map[(Int, Int), Float]] =
+      self.sparkContext.broadcast(prices.flatMap(priceAsString =>
+        ParserUtils.parsePrice(priceAsString)).map(price =>
+        ((price.year, price.month), price.price)).collect.toMap)
+
     /**
      *
      * Obtain the minimum fuel's consumption using a external RDD with the fuel price by Year, Month
      *
      */
-    def minFuelConsumptionByMonthAndAirport(fuelPrice: RDD[String]): RDD[(String, Short)] = ???
+    def minFuelConsumptionByMonthAndAirport(fuelPrices: RDD[String]): RDD[(String, (Short, Short))] = {
+      val reduceFunction = (v1: (Int, Int, Float), v2: (Int, Int, Float)) => (if (v1._3 < v2._3) v1 else v2)
+
+      val priceCatalogue = toBroadcastMapPriceByYearAndMonth(fuelPrices)
+      val pruebaa = self.map(f =>
+        ((f.origin, f.date.getYear, f.date.getMonthOfYear),
+          f.distance * priceCatalogue.value((f.date.getYear, f.date.getMonthOfYear))))
+      val pruebaaelements = pruebaa.collect
+      val prueba1 = self.map(f =>
+        ((f.origin, f.date.getYear, f.date.getMonthOfYear),
+          f.distance * priceCatalogue.value((f.date.getYear, f.date.getMonthOfYear)))).reduceByKey(_ + _)
+      val prueba1elements = prueba1.collect
+      self.map(f =>
+        ((f.origin, f.date.getYear, f.date.getMonthOfYear),
+          f.distance * priceCatalogue.value((f.date.getYear, f.date.getMonthOfYear)))).reduceByKey(_ + _)
+        .map(e => ((e._1._1), (e._1._2, e._1._3, e._2)))
+        .reduceByKey(reduceFunction)
+        .map(e => (e._1, (e._2._1.toShort, e._2._2.toShort)))
+    }
+
+
+      /*self.map(f =>
+        ((f.origin, f.date.getYear, f.date.getMonthOfYear),
+          f.distance * fuelPrices.filter(fuelPrice => (fuelPrice._1 == f.date.getYear && fuelPrice._2 == f.date.getMonthOfYear)).first._3)).map(e => ("hola", (1.toShort, 2.toShort)))
+    }*/
+
+    def getFuelPriceByMonthAndYear(fuelPrices: RDD[(Int, Int, Float)], year: Int, month: Int) =
+      fuelPrices.filter(fuelPrice => (fuelPrice._1 == year && fuelPrice._2 == month)).first._3
 
     /**
      *
@@ -82,7 +124,6 @@ class FlightCsvReader(self: RDD[String]) {
     */
 
   def asignGhostFlights(elapsedSeconds: Int): RDD[Flight] = ???
-
   }
 
 
@@ -94,4 +135,3 @@ trait FlightDsl {
 }
 
 object FlightDsl extends FlightDsl
-

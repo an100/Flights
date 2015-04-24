@@ -15,7 +15,7 @@ class FlightDslTest extends FlatSpec with ShouldMatchers with LocalSparkSqlConte
     val delays2 = delays1.copy(carrier = Cancel, lateAircraft = OnTime)
   }
 
-  trait WithFlightsText extends WithDelays{
+  trait WithFlightsText extends WithDelays {
 
     val flightLine1 = "1987,10,14,3,741,730,912,849,PS,1451,NA,91,79,NA,23,11,SAN,SFO,447,NA,NA,0,0,NA,NA,NA,NA,NA,NA"
     val flightLine2 = "1987,10,14,3,741,730,912,849,PS,1451,NA,91,79,NA,23,11,SAN,SFO,447,NA,NA,0,0,NA,1,NA,NA,NA,0"
@@ -50,7 +50,7 @@ class FlightDslTest extends FlatSpec with ShouldMatchers with LocalSparkSqlConte
     val textFlights = sc.parallelize(correctFlights)
   }
 
-  trait WithErrorsFlightsText extends WithFlightsText{
+  trait WithErrorsFlightsText extends WithFlightsText {
 
     val flightErrorLine1 =
       "1987,13,14,3,741,730,912,849,PS,1451,NA,91,79,NA,23,12,SAN,SFO,447,NA,NA,0,NA,0,NA,NA,NA,NA,NA"
@@ -60,7 +60,7 @@ class FlightDslTest extends FlatSpec with ShouldMatchers with LocalSparkSqlConte
     val errorTextFlights = sc.parallelize(errorFlights)
   }
 
-  trait WithFlightsInSeveralMonths extends WithDelays{
+  trait WithFlightsInSeveralMonths extends WithDelays {
 
     val flight1 = Flight(
       date = ParserUtils.getDateTime(1987, 10, 14),
@@ -91,7 +91,7 @@ class FlightDslTest extends FlatSpec with ShouldMatchers with LocalSparkSqlConte
   }
 
 
-  trait WithGosthsFlights extends WithDelays{
+  trait WithGoshtsFlights extends WithDelays {
 
     val flight1 = Flight(
       date = ParserUtils.getDateTime(1987, 10, 14),
@@ -149,7 +149,7 @@ class FlightDslTest extends FlatSpec with ShouldMatchers with LocalSparkSqlConte
     minPrices should contain (("SAN", (1988.toShort, 11.toShort)))
   }
 
-  it should "assign the appropriate flight to each ghost flight" in new WithGosthsFlights  {
+  it should "assign the appropriate flight to each ghost flight" in new WithGoshtsFlights  {
     val flightsWithGhostSolved = flights.asignGhostFlights(elapsedSeconds)
     val flightsWithGhostSolvedList = flightsWithGhostSolved.collect
     
@@ -160,6 +160,11 @@ class FlightDslTest extends FlatSpec with ShouldMatchers with LocalSparkSqlConte
       flight1.copy(origin = "Aux1", dest="Aux2", departureTime = 800, arrTime = 817, cRSArrTime = 730))
     flightsWithGhostSolvedList should contain (
       flight1.copy(origin = "Aux2", dest="Aux3", departureTime = 817, arrTime = 825, cRSArrTime = 730))
+  }
 
+  it should "broadcast the fuel prices" in new WithFlightsInSeveralMonths {
+    val pricesAsMap = flights.toBroadcastMapPriceByYearAndMonth(listPrices).value
+    pricesAsMap((1987, 10)) should be(0.25)
+    pricesAsMap((1988, 11)) should be(1.5)
   }
 }
